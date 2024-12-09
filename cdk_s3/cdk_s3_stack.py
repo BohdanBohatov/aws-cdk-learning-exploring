@@ -39,21 +39,30 @@ class CdkS3Stack(Stack):
         authorizer = apigw.RequestAuthorizer(
             self, "s3-authorizer",
             handler=auth_lambda,
-            identity_sources=[apigw.IdentitySource.header('auth-s3'), apigw.IdentitySource.query_string('test-s3')]
+            identity_sources=[apigw.IdentitySource.header('auth-s3'), apigw.IdentitySource.query_string('test-s3')],
         )
 
-        api = apigw.RestApi(
+        api_gateway = apigw.RestApi(
             self, "list-s3-api",
             rest_api_name="List S3 Buckets",
             description="This service lists all S3 buckets.",
             default_method_options={
                 "authorization_type": apigw.AuthorizationType.CUSTOM,
-                "authorizer": authorizer
+                "authorizer": authorizer,
             }
         )
 
-        protected_integration=apigw.LambdaIntegration(list_s3_lambda)
-        resource = api.root
-        resource.add_method("GET", protected_integration)
-        resource.add_method("POST", protected_integration)
+        proxy = api_gateway.root.add_proxy(
+            any_method=False,
+            default_integration=apigw.LambdaIntegration(list_s3_lambda),
+        )
+        proxy.add_method("GET", apigw.LambdaIntegration(list_s3_lambda))
+        proxy.add_method("POST", apigw.LambdaIntegration(list_s3_lambda))
+
+
+        #This code to enable this need to reconfigure "methodArn" in authorization lambda more details here https://stackoverflow.com/questions/50331588/aws-api-gateway-custom-authorizer-strange-showing-error
+        #protected_integration=apigw.LambdaIntegration(list_s3_lambda)
+        #resource = api_gateway.root
+        #resource.add_method("GET", protected_integration)
+        #resource.add_method("POST", protected_integration)
 
