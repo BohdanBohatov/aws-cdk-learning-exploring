@@ -1,4 +1,5 @@
 #TODO add check parameters, if no headers/query return UNAUTHIRIZED but in log add error  
+import os
 
 r'''
     This lambda is responsible for authorizing requests to the S3 bucket.
@@ -13,18 +14,20 @@ r'''
 def lambda_handler(event, context):
     print(event)
 
+    api_gateway_arn = os.environ['API_GATEWAY_ARN']
+
     # Retrieve request parameters from the Lambda function input:
     headers = event['headers']
     queryStringParameters = event['queryStringParameters']
     
     if (headers['auth-s3'] == "gandalf-the-white" 
             and queryStringParameters['test-s3'] == "speak-friend-and-enter"):
-        response = generatePolicy('Allow', event["methodArn"])
+        response = generatePolicy('Allow', api_gateway_arn)
         print('authorized')
         return response
     else:
         print('unauthorized')
-        return generatePolicy('Deny', event["methodArn"])
+        return generatePolicy('Deny', api_gateway_arn)
 
 
 def generatePolicy( effect, resource):
