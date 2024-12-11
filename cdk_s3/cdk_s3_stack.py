@@ -3,7 +3,6 @@ from aws_cdk import (
     Stack,
     aws_apigateway as apigw,
     aws_lambda as _lambda,
-    aws_s3 as s3,
     aws_iam as iam
 )
 from constructs import Construct
@@ -39,13 +38,13 @@ class CdkS3Stack(Stack):
             )
         )
 
-
         api_arn = api_gateway.arn_for_execute_api(
             method="*",
             path="/",
             stage=stage_environment
         )
 
+        #This code to enable this need to reconfigure "methodArn" in authorization lambda more details here https://stackoverflow.com/questions/50331588/aws-api-gateway-custom-authorizer-strange-showing-error
         auth_lambda=_lambda.Function(
             self, "authorization",
             runtime=_lambda.Runtime.PYTHON_3_13,
@@ -64,8 +63,6 @@ class CdkS3Stack(Stack):
             results_cache_ttl=Duration.seconds(60)
         )
 
-
-        #This code to enable this need to reconfigure "methodArn" in authorization lambda more details here https://stackoverflow.com/questions/50331588/aws-api-gateway-custom-authorizer-strange-showing-error
         protected_integration=apigw.LambdaIntegration(list_s3_lambda, proxy=False)
         resource = api_gateway.root
         resource.add_method("GET", protected_integration, authorizer=authorizer,)
