@@ -1,0 +1,12 @@
+File with simple task for doing:
+
+1. Create EC2 with nginx in private VPC and attach loadbalancer to it
+
+2. Create SNS and SQS
+
+3. Create Mysql DB in private VPC
+
+4. Create MsSql in public VPC and try to save secret endpoint in Secret Manager
+
+5. Create secret manager
+

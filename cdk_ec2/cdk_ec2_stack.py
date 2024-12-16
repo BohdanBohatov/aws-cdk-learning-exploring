@@ -43,6 +43,7 @@ class CdkEc2Stack(Stack):
         instance = ec2.Instance(
             self, "EC2Instance-1",
             vpc=vpc,
+            availability_zone=vpc.public_subnets[0].availability_zone,   
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PUBLIC
             ),
@@ -58,7 +59,68 @@ class CdkEc2Stack(Stack):
             key_pair=key_pair,
         )
 
-    
+        instance_second = ec2.Instance(
+            self, "EC2Instance-2",
+            vpc=vpc,
+            availability_zone=vpc.public_subnets[1].availability_zone,
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PUBLIC
+            ),
+            security_group=security_group,
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T3,
+                ec2.InstanceSize.SMALL
+            ),
+            machine_image=ec2.AmazonLinuxImage(
+                generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023
+            ),
+            role=role,
+            key_pair=key_pair,
+        )
+
+                # Create EC2 Instance
+        
+        nat_instance = ec2.Instance(
+            self, "EC2Instance-nat",
+            vpc=vpc,
+            availability_zone=vpc.public_subnets[0].availability_zone,   
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            security_group=security_group,
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T3,
+                ec2.InstanceSize.SMALL
+            ),
+            machine_image=ec2.AmazonLinuxImage(
+                generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023
+            ),
+            role=role,
+            key_pair=key_pair,
+            detailed_monitoring=False
+        )
+
+        isolated_instance = ec2.Instance(
+            self, "EC2Instance-isolated",
+            vpc=vpc,
+            availability_zone=vpc.public_subnets[1].availability_zone,   
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
+            ),
+            security_group=security_group,
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T3,
+                ec2.InstanceSize.SMALL
+            ),
+            machine_image=ec2.AmazonLinuxImage(
+                generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023
+            ),
+            role=role,
+            key_pair=key_pair,
+            detailed_monitoring=False
+        )
+
+
     def get_key_pair(self):
         return ec2.KeyPair.from_key_pair_name(
             self,

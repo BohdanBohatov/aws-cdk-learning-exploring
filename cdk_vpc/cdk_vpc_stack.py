@@ -54,3 +54,7 @@ class CdkVpcStack(Stack):
                  value=self.vpc.isolated_subnets[0].subnet_id)
         CfnOutput(self, "Private-2",
                  value=self.vpc.isolated_subnets[1].subnet_id)
+        CfnOutput(self, "Avaliability zone 1",
+                 value=self.vpc.availability_zones[0])
+        CfnOutput(self, "Avaliability zone 2",
+                 value=self.vpc.availability_zones[1])
