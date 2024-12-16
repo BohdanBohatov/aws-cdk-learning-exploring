@@ -1,6 +1,9 @@
 File with simple task for doing:
 
 1. Create EC2 with nginx in private VPC and attach loadbalancer to it
+    a. Add rule to check hostname and deny direct access to lb dnc name
+    b. Add tls sertificate
+    c. Add redirect rule from 80 to 433
 
 2. Create SNS and SQS
 

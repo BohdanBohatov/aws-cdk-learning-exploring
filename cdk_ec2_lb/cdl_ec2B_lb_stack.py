@@ -16,23 +16,23 @@ class CdkEc2LbStack(Stack):
         return self._vpc
     
     @property
-    def security_group(self):
+    def get_security_group(self):
         return self._security_group
     
     @property
-    def role(self):
+    def get_ec2_role(self):
         return self._role
     
     @property
-    def key_pair(self):
+    def get_key_pair(self):
         return self._key_pair
     
     @property
-    def nat_instance(self):
+    def get_nat_instance(self):
         return self._nat_instance
     
     @property
-    def application_load_balancer(self):
+    def get_application_load_balancer(self):
         return self._load_balancer
     
 
@@ -59,14 +59,14 @@ class CdkEc2LbStack(Stack):
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
             ),
-            security_group=self.security_group,
+            security_group=self.get_security_group,
             instance_type=ec2.InstanceType.of(
                 ec2.InstanceClass.T3,
                 ec2.InstanceSize.SMALL
             ),
             machine_image=machine_image,
-            role=self.role,
-            key_pair=self.key_pair,
+            role=self.get_ec2_role,
+            key_pair=self.get_key_pair,
             detailed_monitoring=False,
         )
 
@@ -123,18 +123,6 @@ class CdkEc2LbStack(Stack):
 
 
     def _get_load_balancer(self):
-        lb = elbv2.ApplicationLoadBalancer(
-            self, "ApplicationLoadBalancer",
-            vpc=self.vpc,
-            internet_facing=True,
-            security_group=self.security_group,
-            cross_zone_enabled=True,
-            load_balancer_name="ec2-lb",
-            vpc_subnets=ec2.SubnetSelection(
-                subnet_type=ec2.SubnetType.PUBLIC
-            )
-        )
-
         # Create target group
         target_group = elbv2.ApplicationTargetGroup(
             self, "EC2TargetGroup",
@@ -149,18 +137,45 @@ class CdkEc2LbStack(Stack):
                 timeout=Duration.seconds(5)
             ),
         )
-
         instance_target = targets.InstanceTarget(
-            self.nat_instance, 80
+            self.get_nat_instance, 80
         )
-
         target_group.add_target(instance_target)
 
+        #Create application load balancer and add target group to it
+        lb = elbv2.ApplicationLoadBalancer(
+            self, "ApplicationLoadBalancer",
+            vpc=self.vpc,
+            internet_facing=True,
+            security_group=self.get_security_group,
+            cross_zone_enabled=True,
+            load_balancer_name="ec2-lb",
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PUBLIC
+            )
+        )
+
         # Add listener
-        lb.add_listener(
+        listener = lb.add_listener(
             "Ec2Instance",
             port=80,
-            default_target_groups=[target_group]
+            default_action=elbv2.ListenerAction.fixed_response(
+                status_code=404,
+                content_type="text/plain",
+                message_body="Not Found"
+            )
+            #default_target_groups=[target_group],
+        )
+
+        listener.add_action(
+            "HostRouting",
+            conditions=[
+                elbv2.ListenerCondition.host_headers(["alphabetagamazeta.site"])
+            ],
+            action=elbv2.ListenerAction.forward(
+                target_groups=[target_group]
+            ),
+            priority=1
         )
 
         # Output the load balancer DNS name
