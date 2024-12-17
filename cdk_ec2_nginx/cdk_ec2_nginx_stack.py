@@ -93,6 +93,12 @@ class CdkEcNginxStack(Stack):
             "Allow http access from anywhere",
         )
 
+        security_group.add_ingress_rule(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(443),
+            "Allow https access from anywhere",
+        )
+
 
         return security_group
     

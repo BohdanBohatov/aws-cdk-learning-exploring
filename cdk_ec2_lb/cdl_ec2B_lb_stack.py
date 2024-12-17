@@ -100,6 +100,11 @@ class CdkEc2LbStack(Stack):
             "Allow http access from anywhere",
         )
 
+        security_group.add_ingress_rule(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(443),
+            "Allow https access from anywhere",
+        )
 
         return security_group
     
@@ -156,18 +161,46 @@ class CdkEc2LbStack(Stack):
         )
 
         # Add listener
-        listener = lb.add_listener(
-            "Ec2Instance",
+        
+        http_listener = lb.add_listener(
+            "Http_Listener",
             port=80,
             default_action=elbv2.ListenerAction.fixed_response(
                 status_code=404,
                 content_type="text/plain",
                 message_body="Not Found"
             )
-            #default_target_groups=[target_group],
         )
 
-        listener.add_action(
+        http_listener.add_action(
+            "Http_Routing",
+            conditions=[
+                elbv2.ListenerCondition.host_headers(["alphabetagamazeta.site"])
+            ],
+            action=elbv2.ListenerAction.redirect(
+                port="443",
+                protocol="HTTPS",
+                permanent=True
+            ),
+            priority=1
+        )
+
+        https_listener = lb.add_listener(
+            "HTTPS_Listener",
+            port=443,
+            protocol=elbv2.ApplicationProtocol.HTTPS,
+            certificates=[elbv2.ListenerCertificate(
+                certificate_arn="arn:aws:acm:eu-north-1:533267448108:certificate/23b0b290-2a78-4b73-90db-3fba786977a3"
+            )],
+            ssl_policy=elbv2.SslPolicy.RECOMMENDED,
+            default_action=elbv2.ListenerAction.fixed_response(
+                status_code=404,
+                content_type="text/plain",
+                message_body="Not Found"
+            )
+        )
+
+        https_listener.add_action(
             "HostRouting",
             conditions=[
                 elbv2.ListenerCondition.host_headers(["alphabetagamazeta.site"])
