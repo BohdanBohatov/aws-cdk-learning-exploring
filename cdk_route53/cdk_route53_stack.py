@@ -26,19 +26,19 @@ class CdkRoute53Stack(Stack):
         
         self.hosted_zone.apply_removal_policy(RemovalPolicy.RETAIN)
 
-        route53.ARecord(
-            self, "A_Record",
-            zone=self.hosted_zone,
-            target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(load_balancer)),
-            record_name=""
-        )
+        #route53.ARecord(
+        #    self, "A_Record",
+        #    zone=self.hosted_zone,
+        #    target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(load_balancer)),
+        #    record_name=""
+        #)
 
-        route53.ARecord(
-            self, "WWW_Record",
-            zone=self.hosted_zone,
-            target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(load_balancer)),
-            record_name="www"
-        )
+        #route53.ARecord(
+        #    self, "WWW_Record",
+        #    zone=self.hosted_zone,
+        #    target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(load_balancer)),
+        #    record_name="www"
+        #)
 
         CfnOutput(
             self, "HostedZoneArn",

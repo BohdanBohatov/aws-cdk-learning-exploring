@@ -5,6 +5,15 @@ File with simple task for doing:
     b. Add tls sertificate
     c. Add redirect rule from 80 to 433
 
+
+Create Postgres db with Autocreate user with permision to DB (user in db) RDS instace do password in Secret Manager
+Create snapshot for DB
+Create full dump for DB dump into s3 bucket (see is it possible to import and rise db in another hosting using cdk)
+
+
+Create alerts for budget
+
+
 2. Create SNS and SQS
 
 3. Create Mysql DB in private VPC
@@ -13,3 +22,5 @@ File with simple task for doing:
 
 5. Create secret manager
 
+
+Питання щодо CI/CD на ec2 інстанс варіанти які я маю і як краще це робити
