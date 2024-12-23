@@ -22,5 +22,4 @@ Create alerts for budget
 
 5. Create secret manager
 
-
-Питання щодо CI/CD на ec2 інстанс варіанти які я маю і як краще це робити
+6. Add monitoring and alerts for db and ec2

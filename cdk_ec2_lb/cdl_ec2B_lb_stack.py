@@ -1,10 +1,10 @@
 from aws_cdk import (
     Stack,
+    Duration,
+    CfnOutput,
     aws_ec2 as ec2,
     aws_iam as iam,
-    CfnOutput,
     aws_elasticloadbalancingv2 as elbv2,
-    Duration,
     aws_elasticloadbalancingv2_targets as targets
 )
 from constructs import Construct
