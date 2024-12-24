@@ -27,7 +27,7 @@ class CdkLambdaLearningLayerStack(Stack):
             self, "SendRequestLambda",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="request_lambda.lambda_handler",
-            code=_lambda.Code.from_asset("lambdas"),
+            code=_lambda.Code.from_asset("lambdas/request_lambda"),
             layers=[layer],
             timeout=Duration.seconds(120),
         )

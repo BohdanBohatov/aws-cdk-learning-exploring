@@ -24,7 +24,7 @@ class InfrastructureStack(cdk.Stack):
         self.env_name = self.app.node.try_get_context('env') or 'dev'
         self.config = Configuration(self.env_name)
         
-        #CdkS3Stack(app, "CdkS3Stack")
+        CdkS3Stack(self.app, "CdkS3Stack")
         vpc_stack = CdkVpcStack(self.app, self.config.get_vpc_config(), "CdkVpcStack")
         ec2_lb_stack = CdkEc2LbStack(self.app, "CdkEc2LbStack", vpc=vpc_stack.get_vpc)
         route53_stack = CdkRoute53Stack(self.app, "CdkRoute53Stack", load_balancer=ec2_lb_stack.get_application_load_balancer) 

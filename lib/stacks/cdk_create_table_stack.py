@@ -25,7 +25,7 @@ class CdkCreatePostgresTableStack(Stack):
             self, "CreateTableLambda",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="postgres_new_table.lambda_handler",
-            code=_lambda.Code.from_asset("lambdas"),
+            code=_lambda.Code.from_asset("lambdas/postgres_new_table"),
             layers=[postgres_layer],
             environment={
                 "DB_SECRET_NAME": database.secret.secret_name,

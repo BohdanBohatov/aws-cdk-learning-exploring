@@ -17,7 +17,7 @@ class CdkS3Stack(Stack):
         list_s3_lambda=_lambda.Function(
             self, "list-s3",
             runtime=_lambda.Runtime.PYTHON_3_13,
-            code=_lambda.Code.from_asset("lambdas"),
+            code=_lambda.Code.from_asset("lambdas/list_s3"),
             handler="list-s3.lambda_handler",
             timeout=Duration.seconds(60),
         )
@@ -48,7 +48,7 @@ class CdkS3Stack(Stack):
         auth_lambda=_lambda.Function(
             self, "authorization",
             runtime=_lambda.Runtime.PYTHON_3_13,
-            code=_lambda.Code.from_asset("lambdas"),
+            code=_lambda.Code.from_asset("lambdas/auth_s3"),
             handler="auth_s3.lambda_handler",
             environment= {
                 "API_GATEWAY_ARN": api_arn
