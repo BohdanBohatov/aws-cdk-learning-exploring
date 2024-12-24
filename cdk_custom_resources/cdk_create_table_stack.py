@@ -1,4 +1,5 @@
 from aws_cdk import (
+    aws_logs as logs,
     Stack,
     Duration,
     CfnOutput,
@@ -11,7 +12,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-class CdkCreatePostgresTable(Stack):
+class CdkCreatePostgresTableStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, 
                  vpc: ec2.Vpc, 
@@ -42,6 +43,8 @@ class CdkCreatePostgresTable(Stack):
         
         custom_resource = cr.AwsCustomResource(
             self, "DatabaseCustomResource",
+            resource_type='Custom::CdkCreatePostgresTable',
+            log_retention=logs.RetentionDays.ONE_WEEK,
             on_create=cr.AwsSdkCall(
                 physical_resource_id=cr.PhysicalResourceId.of("DatabaseCustomResourceCreate"),
                 service="Lambda",
@@ -49,23 +52,6 @@ class CdkCreatePostgresTable(Stack):
                 parameters={
                     "FunctionName": create_table_lambda.function_name,
                     "Payload": '{"RequestType": "Create"}'
-                }
-            ),
-            on_update=cr.AwsSdkCall(
-                physical_resource_id=cr.PhysicalResourceId.of("DatabaseCustomResourceUpdate"),
-                service="Lambda",
-                action="invoke",
-                parameters={
-                    "FunctionName": create_table_lambda.function_name,
-                    "Payload": '{"RequestType": "Update"}'
-                }
-            ),
-            on_delete=cr.AwsSdkCall(
-                physical_resource_id=cr.PhysicalResourceId.of("DatabaseCustomResourceDelete"),
-                service="Lambda",
-                action="ignore",
-                parameters={
-                    #No need to implement delete function
                 }
             ),
             policy=cr.AwsCustomResourcePolicy.from_statements([
@@ -76,3 +62,5 @@ class CdkCreatePostgresTable(Stack):
                 )
             ])
         )
+
+

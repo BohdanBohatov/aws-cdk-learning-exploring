@@ -67,6 +67,3 @@ class CdkPostgresStack(Stack):
             )
         )
 
-
-
-     

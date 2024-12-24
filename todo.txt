@@ -23,3 +23,5 @@ Create alerts for budget
 5. Create secret manager
 
 6. Add monitoring and alerts for db and ec2
+
+7. Learn lambda in private network.

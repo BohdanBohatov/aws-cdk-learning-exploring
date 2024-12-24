@@ -11,6 +11,7 @@ from cdk_route53.cdk_route53_stack import CdkRoute53Stack
 from cdk_certificate_manager.cdk_certificate_manager_stack import CdkCertificateStack
 from cdk_rds_postgres.cdk_rsd_postgres_stack import CdkPostgresStack
 from cdk_lambda_layer.cdk_lambda_layer_stack import CdkLambdaLayerStack
+from cdk_custom_resources.cdk_create_table_stack import CdkCreatePostgresTableStack
 
 app = cdk.App()
 #CdkS3Stack(app, "CdkS3Stack")
@@ -20,6 +21,10 @@ route53_stack = CdkRoute53Stack(app, "CdkRoute53Stack", load_balancer=ec2_lb_sta
 tls_certificate_stack = CdkCertificateStack(app, "CdkCertificateStack", hosted_zone=route53_stack.get_hosted_zone)
 rds_postgres_stack = CdkPostgresStack(app, "CdkRdsPostgresStack", vpc=vpc_stack.get_vpc)
 lambda_layer_stack = CdkLambdaLayerStack(app, "CdkLambdaLayerStack")
+create_table_stack = CdkCreatePostgresTableStack(app, "CdkCreateTableStack", 
+                                                 vpc=vpc_stack.get_vpc, 
+                                                 database=rds_postgres_stack.get_database, 
+                                                 postgres_layer=lambda_layer_stack.get_layer)
 
 
 app.synth()
