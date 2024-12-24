@@ -1,7 +1,7 @@
 import aws_cdk as core
 import aws_cdk.assertions as assertions
 
-from cdk_s3.cdk_s3_stack import CdkS3Stack
+from lib.cdk_s3_stack import CdkS3Stack
 
 # example tests. To run these tests, uncomment this file along with the example
 # resource in cdk_s3/cdk_s3_stack.py

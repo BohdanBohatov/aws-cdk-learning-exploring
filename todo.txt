@@ -25,3 +25,21 @@ Create alerts for budget
 6. Add monitoring and alerts for db and ec2
 
 7. Learn lambda in private network.
+
+
+cdk-project/
+│   app.py                
+├── lib/ 
+│   ├── stacks/
+│   │   ├── vpc_stack.py
+|   |   |── other_stacks
+│   ├── constructs/
+│   │   ├── vpc_endpoints.py
+│   │   └── monitoring.py
+│   └── configs/
+│       ├── dev.yaml
+│       ├── staging.yaml
+│       └── prod.yaml
+├── tests/
+├── cdk.json
+└── requirements.txt

@@ -11,35 +11,35 @@ class CdkVpcStack(Stack):
     def get_vpc(self):
         return self.vpc
 
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, config: dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Create VPC
         self.vpc = ec2.Vpc(
             self, 
             "CDK-VPC",
-            ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
-            max_azs=2,  # Use 2 Availability Zones
+            ip_addresses=ec2.IpAddresses.cidr(config['vpc']['cidr']),
+            max_azs=config['vpc']['maxAzs'],
             subnet_configuration=[
                 ec2.SubnetConfiguration(
                     name="Public",
                     subnet_type=ec2.SubnetType.PUBLIC,
-                    cidr_mask=24,
+                    cidr_mask=config['vpc']['publicSubnetMask'],
                 ),
                 ec2.SubnetConfiguration(
                     name="Private-NAT",
                     subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
-                    cidr_mask=24,
+                    cidr_mask=config['vpc']['privateSubnetMask'],
                 ),
                 ec2.SubnetConfiguration(
                     name="Private",
                     subnet_type=ec2.SubnetType.PRIVATE_ISOLATED,
-                    cidr_mask=24,
+                    cidr_mask=config['vpc']['isolatedSubnetMask'],
                 )
             ],
             # Enable DNS hostnames and DNS support
-            enable_dns_hostnames=True,
-            enable_dns_support=True,
+            enable_dns_hostnames=config['vpc']['enableDnsHostnames'],
+            enable_dns_support=config['vpc']['enableDnsSupport'],
             vpc_name="CDK-vpc"
         )
         

@@ -1,0 +1,14 @@
+environment: dev
+vpc:
+  maxAzs: 2
+  cidr: 10.0.0.0/16
+  publicSubnetMask: 24
+  privateSubnetMask: 24
+  isolatedSubnetMask: 24
+  enableDnsHostnames: true
+  enableDnsSupport: true
+  
+tags:
+  Project: CDK-LEARNING
+  Environment: development
+  ManagedBy: CDK
