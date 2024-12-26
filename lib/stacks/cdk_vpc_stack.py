@@ -16,30 +16,30 @@ class CdkVpcStack(Stack):
 
         # Create VPC
         self.vpc = ec2.Vpc(
-            self, 
+            self,
             "CDK-VPC",
-            ip_addresses=ec2.IpAddresses.cidr(config['vpc']['cidr']),
-            max_azs=config['vpc']['maxAzs'],
+            ip_addresses=ec2.IpAddresses.cidr(config['cidr']),
+            max_azs=config['maxAzs'],
             subnet_configuration=[
                 ec2.SubnetConfiguration(
                     name="Public",
                     subnet_type=ec2.SubnetType.PUBLIC,
-                    cidr_mask=config['vpc']['publicSubnetMask'],
+                    cidr_mask=config['publicSubnetMask'],
                 ),
                 ec2.SubnetConfiguration(
                     name="Private-NAT",
                     subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
-                    cidr_mask=config['vpc']['privateSubnetMask'],
+                    cidr_mask=config['privateSubnetMask'],
                 ),
                 ec2.SubnetConfiguration(
                     name="Private",
                     subnet_type=ec2.SubnetType.PRIVATE_ISOLATED,
-                    cidr_mask=config['vpc']['isolatedSubnetMask'],
+                    cidr_mask=config['isolatedSubnetMask'],
                 )
             ],
             # Enable DNS hostnames and DNS support
-            enable_dns_hostnames=config['vpc']['enableDnsHostnames'],
-            enable_dns_support=config['vpc']['enableDnsSupport'],
+            enable_dns_hostnames=config['enableDnsHostnames'],
+            enable_dns_support=config['enableDnsSupport'],
             vpc_name="CDK-vpc"
         )
         
