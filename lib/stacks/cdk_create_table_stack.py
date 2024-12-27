@@ -12,12 +12,14 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-class CdkCreatePostgresTableStack(Stack):
+class CdkCreatePostgresDatabaseStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, 
-                 vpc: ec2.Vpc, 
-                 database: rds.DatabaseInstance, 
-                 postgres_layer: _lambda.LayerVersion, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str,
+                 vpc: ec2.Vpc,
+                 db_instance: rds.DatabaseInstance,
+                 postgres_layer: _lambda.LayerVersion,
+                 database_name: str,
+                 **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
 
@@ -28,8 +30,8 @@ class CdkCreatePostgresTableStack(Stack):
             code=_lambda.Code.from_asset("lambdas/postgres_new_table"),
             layers=[postgres_layer],
             environment={
-                "DB_SECRET_NAME": database.secret.secret_name,
-                "NEW_DATABASE_NAME": "lambda_created_db"
+                "DB_ADMIN_SECRET_NAME": db_instance.secret.secret_name,
+                "NEW_DATABASE_NAME": database_name
             },
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(
@@ -38,8 +40,8 @@ class CdkCreatePostgresTableStack(Stack):
             timeout=Duration.seconds(120),
         )
 
-        database.secret.grant_read(create_table_lambda)
-        database.grant_connect(create_table_lambda)
+        db_instance.secret.grant_read(create_table_lambda)
+        db_instance.grant_connect(create_table_lambda)
         
         custom_resource = cr.AwsCustomResource(
             self, "DatabaseCustomResource",

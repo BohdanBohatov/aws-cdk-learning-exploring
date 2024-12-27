@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 
 def get_secret():
     print("Get secret")
-    secret_name = os.environ['DB_SECRET_NAME']
+    secret_name = os.environ['DB_ADMIN_SECRET_NAME']
     session = boto3.session.Session()
     client = session.client('secretsmanager')
     try:

@@ -1,23 +1,19 @@
 from aws_cdk import (
     Stack,
     Duration,
-    CfnOutput,
-    aws_iam as iam,
     aws_rds as rds,
     aws_ec2 as ec2,
-    aws_lambda as _lambda,
-    custom_resources as cr,
-    
 )
+
 from constructs import Construct
 
 class CdkPostgresStack(Stack):
 
     @property
-    def get_database(self):
+    def get_db_instance(self):
         return self.database
 
-    def __init__(self, scope: Construct, construct_id: str, vpc: ec2.Vpc, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, vpc: ec2.Vpc, instance_name: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         postgres_sg = ec2.SecurityGroup(
@@ -40,7 +36,7 @@ class CdkPostgresStack(Stack):
         )
 
         self.database = rds.DatabaseInstance(
-            self, "PostgresDB",
+            self, instance_name,
             engine=rds.DatabaseInstanceEngine.postgres(
                 version=rds.PostgresEngineVersion.VER_17_2
             ),
@@ -56,14 +52,16 @@ class CdkPostgresStack(Stack):
             allocated_storage=20,
             max_allocated_storage=100,
             storage_type=rds.StorageType.GP2,
-            backup_retention=Duration.days(0),
-            deletion_protection=False,
+            backup_retention=Duration.days(2),
+            preferred_backup_window="03:00-04:00",
+            deletion_protection=True,
             delete_automated_backups=True,
             storage_encrypted=True,
             multi_az=False,
             publicly_accessible=True,
             credentials=rds.Credentials.from_generated_secret(
-                username="postgres_admin"
+                username="postgres_admin",
+
             )
         )
 

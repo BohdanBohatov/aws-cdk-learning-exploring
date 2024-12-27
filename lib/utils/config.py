@@ -15,8 +15,14 @@ class Configuration:
         with open(config_path, 'r') as config_file:
             return yaml.safe_load(config_file)
 
+    def get_config(self) -> dict:
+        return self.config
+
     def get_vpc_config(self) -> dict:
         return self.config.get('vpc', {})
 
     def get_tags_config(self) -> Dict[str, str]:
         return self.config.get('tags', {})
+
+    def get_database_config(self) -> Dict[str, str]:
+        return self.config.get('database', {})

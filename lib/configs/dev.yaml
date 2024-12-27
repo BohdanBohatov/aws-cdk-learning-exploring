@@ -1,4 +1,12 @@
 environment: dev
+
+database:
+  instanceName: dev-postgresql-db
+  databaseName: dev_database
+  username: dev_user
+  port: 5432
+  storageSize: 20
+
 vpc:
   maxAzs: 2
   cidr: 10.0.0.0/16
