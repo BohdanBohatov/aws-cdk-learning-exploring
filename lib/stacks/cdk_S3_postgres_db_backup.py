@@ -43,10 +43,14 @@ class CdkPostgresBackupStack(Stack):
                     self, "lambda-images",
                     repository_name="lambda-images/fedora41-postgresql"  # Replace with your ECR repo name
                 ),
-                tag_or_digest="1.9"
+                tag_or_digest="1.12"
             ),
             timeout=Duration.seconds(20),
-            memory_size=1024,
+            vpc=vpc,
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
+            ),
+            memory_size=512,
             environment={
                 "BUCKET_NAME": backup_bucket.bucket_name,
                 "DB_ADMIN_SECRET": db_instance.secret.secret_name,
@@ -54,13 +58,14 @@ class CdkPostgresBackupStack(Stack):
             }
         )
 
-        #events.Rule(
-        #    self, "DailyBackupRule",
-        #    schedule=events.Schedule.cron(hour="3", minute="0"),
-        #    targets=[new LambdaFunction(backup_lambda)]
-        #)
+        events.Rule(
+           self, "DailyBackupRule",
+           schedule=events.Schedule.cron(hour="3", minute="0"),
+           targets=[targets.LambdaFunction(backup_lambda)]
+        )
 
         db_instance.secret.grant_read(backup_lambda)
         db_instance.grant_connect(backup_lambda)
         backup_bucket.grant_write(backup_lambda)
+
 

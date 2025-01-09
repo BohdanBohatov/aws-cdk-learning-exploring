@@ -68,6 +68,9 @@ class CdkVpcStack(Stack):
             security_groups= [security_group],
         )
 
+        self.vpc.add_gateway_endpoint("S3Endpoint",
+                                 service=ec2.GatewayVpcEndpointAwsService.S3)
+
         
         CfnOutput(self, "Public-1",
                  value=self.vpc.public_subnets[0].subnet_id)

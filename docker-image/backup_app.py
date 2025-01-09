@@ -12,7 +12,6 @@ def get_secret():
 
     session = boto3.session.Session()
     client = session.client('secretsmanager')
-    print("Connect to secret manager ")
 
     try:
         get_secret_value_response = client.get_secret_value(
@@ -34,10 +33,8 @@ def lambda_handler(event, context):
     db_user = admin_secret['username']
     db_password = admin_secret['password']
 
-    db_name = admin_secret['engine']
-    bucket_name = os.environ['DB_TO_BACKUP']
-
-    print(f"Got parameters: db_host {db_host}; db_name {db_name}; db_user {db_user}; bucket_name {bucket_name}")
+    db_name = os.environ['DB_TO_BACKUP']
+    bucket_name = os.environ['BUCKET_NAME']
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     backup_file = f"/tmp/backup_{timestamp}.dump"
@@ -47,43 +44,25 @@ def lambda_handler(event, context):
         # Set environment variable for pg_dump
         os.environ['PGPASSWORD'] = db_password
 
-        # # Create backup
-        # subprocess.run([
-        #    'pg_dump',
-        #    '-h', db_host,
-        #    '-U', db_user,
-        #    '-d', db_name,
-        #    '-F', 'c',
-        #    '-f', backup_file
-        # ], check=True
-        # )
-        #
-        # # Upload to S3
-        # s3_client = boto3.client('s3')
-        # s3_client.upload_file(
-        #    backup_file,
-        #    bucket_name,
-        #    s3_key
-        # )
+        print("Create backup")
+        # Create backup
+        subprocess.run([
+           'pg_dump',
+           '-h', db_host,
+           '-U', db_user,
+           '-d', db_name,
+           '-F', 'c',
+           '-f', backup_file
+        ], check=True
+        )
+        print("Backup created")
 
-        print("Create file to store in S3")
-        backup_file = f"/tmp/{timestamp}.txt"
-        with open(backup_file, 'w') as file:
-            file.write(f'Hello, this is url of postgresql to be backed up {db_host}, db_name {db_name}, db_user {db_name}')
-            file.close()
-
-        print("Upload file to S3")
         # Upload to S3
         s3_client = boto3.client('s3')
-        print("Connected to S3")
-
-        result = subprocess.run(['ls', '-l', '/tmp'], check=True,  capture_output=True, text=True)
-        print(result)
-
-        response = s3_client.upload_file(
-            backup_file,
-            bucket_name,
-            f"file-in-storage-{timestamp}.txt"
+        s3_client.upload_file(
+           backup_file,
+           bucket_name,
+           s3_key
         )
 
         print("File uploaded to S3")
