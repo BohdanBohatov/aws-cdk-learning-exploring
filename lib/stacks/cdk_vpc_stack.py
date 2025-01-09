@@ -27,15 +27,15 @@ class CdkVpcStack(Stack):
                     cidr_mask=config['publicSubnetMask'],
                 ),
                 ec2.SubnetConfiguration(
-                    name="Private-NAT",
-                    subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
-                    cidr_mask=config['privateSubnetMask'],
-                ),
-                ec2.SubnetConfiguration(
                     name="Private",
                     subnet_type=ec2.SubnetType.PRIVATE_ISOLATED,
                     cidr_mask=config['isolatedSubnetMask'],
-                )
+                ),
+                # ec2.SubnetConfiguration(
+                #    name="Private-NAT",
+                #    subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                #    cidr_mask=config['privateSubnetMask'],
+                # ),
             ],
             # Enable DNS hostnames and DNS support
             enable_dns_hostnames=config['enableDnsHostnames'],
@@ -73,10 +73,10 @@ class CdkVpcStack(Stack):
                  value=self.vpc.public_subnets[0].subnet_id)
         CfnOutput(self, "Public-2",
                  value=self.vpc.public_subnets[1].subnet_id)
-        CfnOutput(self, "Private-NAT-1",
-                 value=self.vpc.private_subnets[0].subnet_id)
-        CfnOutput(self, "Private-NAT-2",
-                 value=self.vpc.private_subnets[1].subnet_id)
+        #CfnOutput(self, "Private-NAT-1",
+        #         value=self.vpc.private_subnets[0].subnet_id)
+        #CfnOutput(self, "Private-NAT-2",
+        #         value=self.vpc.private_subnets[1].subnet_id)
         CfnOutput(self, "Private-1",
                  value=self.vpc.isolated_subnets[0].subnet_id)
         CfnOutput(self, "Private-2",

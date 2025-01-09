@@ -7,10 +7,10 @@ from lib.stacks.cdk_create_table_stack import CdkCreatePostgresDatabaseStack
 from lib.stacks.cdk_lambda_layer_stack import CdkLambdaLayerStack
 from lib.stacks.cdk_route53_stack import CdkRoute53Stack
 from lib.stacks.cdk_rsd_postgres_stack import CdkPostgresStack
-from lib.stacks.cdk_s3_stack import CdkS3Stack
 from lib.stacks.cdk_vpc_stack import CdkVpcStack
 from lib.stacks.cdl_ec2B_lb_stack import CdkEc2LbStack
 from lib.stacks.cdk_create_db_user_stack import CdkCreatePostgresUserStack
+from lib.stacks.cdk_S3_postgres_db_backup import CdkPostgresBackupStack
 
 
 class ApplicationStack:
@@ -21,6 +21,7 @@ class ApplicationStack:
 
         self._init_infrastructure_stacks()
         self._database_stacks()
+        self._postgres_backup_stack()
 
 
     def _init_infrastructure_stacks(self) -> None:
@@ -90,6 +91,19 @@ class ApplicationStack:
             vpc=self.vpc_stack.get_vpc
         )
         self.ec2_lb_stack.add_dependency(self.vpc_stack)
+
+    def _postgres_backup_stack(self) -> None:
+        """Initialize S3 backup stack"""
+        self.postgres_backup_stack = CdkPostgresBackupStack(
+            self.app,
+            f"CdkPostgresBackupStack-{self.env_name}",
+            environment=self.env_name,
+            db_instance=self.rds_stack.get_db_instance,
+            vpc=self.vpc_stack.vpc
+        )
+
+        self.postgres_backup_stack.add_dependency(self.create_database_stack)
+        self.postgres_backup_stack.add_dependency(self.lambda_layer_stack)
 
 
 def main() -> None:

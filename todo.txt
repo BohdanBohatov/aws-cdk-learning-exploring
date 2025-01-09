@@ -27,6 +27,10 @@ Create alerts for budget
 7. Learn lambda in private network.
 
 
+Questions:
+    Коли потрібно краще видаляти бекапи, через яку кількість днів?
+
+
 cdk-project/
 │   app.py                
 ├── lib/ 
