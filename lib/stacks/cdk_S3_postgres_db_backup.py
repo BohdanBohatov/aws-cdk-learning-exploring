@@ -43,7 +43,7 @@ class CdkPostgresBackupStack(Stack):
                     self, "lambda-images",
                     repository_name="lambda-images/fedora41-postgresql"  # Replace with your ECR repo name
                 ),
-                tag_or_digest="1.12"
+                tag_or_digest="1.13"
             ),
             timeout=Duration.seconds(20),
             vpc=vpc,
