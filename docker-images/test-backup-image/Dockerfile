@@ -18,13 +18,9 @@ RUN dnf update -y && \
     dnf clean all && \
     localedef -i en_US -f UTF-8 en_US.UTF-8 && \
     pip install --target ${FUNCTION_DIR} awslambdaric && \
-    pip install boto3
+    pip install boto3 && \
+    chmod 777 /run/postgresql/
 
-RUN mkdir -p /var/lib/pgsql/17/data && \
-    chown postgres:postgres /var/lib/pgsql/17/data && \
-    su postgres -c "/usr/pgsql-17/bin/initdb -D /var/lib/pgsql/17/data" && \
-    su postgres -c "echo \"listen_addresses='*'\" >> /var/lib/pgsql/17/data/postgresql.conf" && \
-    su postgres -c "echo \"host all all 0.0.0.0/0 md5\" >> /var/lib/pgsql/17/data/pg_hba.conf"
 
 WORKDIR ${FUNCTION_DIR}
 

@@ -47,3 +47,35 @@ cdk-project/
 ├── tests/
 ├── cdk.json
 └── requirements.txt
+
+{
+  "bucket_name": "cdkpostgresbackupstack-de-postgresbackupbucketdev1-mrl8o4o0yioq",
+  "db_folder": "20250113_030012",
+  "db_roles_users_file": "backup_roles_users_20250113_030012.sql",
+  "db_file": "backup_database_20250113_030012.dump"
+ }
+
+
+import subprocess
+def start_postgresql():
+    command = 'su postgres -c "/usr/pgsql-17/bin/pg_ctl -D /var/lib/pgsql/17/data start"'
+    try:
+        print("Starting PostgreSQL...")
+        result = subprocess.run(command, shell=True, check=True, text=True)
+        print("PostgreSQL started successfully.")
+    except subprocess.CalledProcessError as e:
+        print("Failed to start PostgreSQL.")
+        print("Error Code:", e.returncode)
+        print("Error Output:", e)
+
+if __name__ == "__main__":
+    start_postgresql()
+
+
+---------------------
+Workflow to test backup:
+1. Create AMI with installed postgresql server
+2. After lambda finished creating backup, lambda triggers lambda to create EC2 instance
+3. When EC2 created it must trigger lambda to check backups
+4. When backup checked it must be downloaded to S3 and to Azure as checked backups
+5. When backup downloaded EC2 must trigger lambda to destroy itself

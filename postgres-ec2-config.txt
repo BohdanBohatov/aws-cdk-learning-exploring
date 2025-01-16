@@ -1,0 +1,96 @@
+----------------
+    Installing required software
+apt-get update
+apt-get install lsb-release
+apt-get install -y curl
+apt-get install -y gpg
+bash -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
+apt install -y unzip
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+rm awscliv2.zip
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+apt update
+DEBIAN_FRONTEND=noninteractive apt install -y postgresql-17
+
+--------------
+If no ssm agent running on instance need to run it:
+sudo snap start amazon-ssm-agent
+systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
+-----------------
+Permission to EC2
+    Access to s3 bucket to list and download items
+    Policy with name: AmazonSSMManagedInstanceCore
+
+-------------------------------
+---------------
+Add role to EC2 instance "AmazonSSMManagedInstanceCore"
+--------------------
+Add role to lambda
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:SendCommand",
+                "ssm:GetCommandInvocation"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+--------------------
+
+----------------------
+#!/bin/bash
+set -e
+
+mkdir -p /var/lib/pgsql/17/data
+chown postgres:postgres /var/lib/pgsql/17/data
+
+
+su postgres -c '/usr/lib/postgresql/17/bin/initdb -D /var/lib/pgsql/17/data'
+su postgres -c 'echo "listen_addresses=\'*\'" >> /var/lib/pgsql/17/data/postgresql.conf'
+su postgres -c 'echo "host all all 0.0.0.0/0 md5" >> /var/lib/pgsql/17/data/pg_hba.conf'
+su postgres -c '/usr/lib/postgresql/17/bin/pg_ctl -D /var/lib/pgsql/17/data start'
+
+tail -f /dev/null
+
+---------------
+
+Some useful commands
+sudo tail -f /var/log/amazon/ssm/amazon-ssm-agent.log - ssm log file
+systemctl status snap.amazon-ssm-agent.amazon-ssm-agent.service
+
+
+----------------
+EC2 image builder component
+name: Install postgresql
+description: Installing postgresql 17 version on ubuntu
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: UpdateSystem
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo "Start script to enable nginx" >> /var/log/custom.log
+            - apt-get update
+            - apt-get install lsb-release
+            - apt-get install -y curl
+            - apt-get install -y gpg
+            - bash -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+            - curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+            - apt update
+            - su postgres -c "DEBIAN_FRONTEND=noninteractive apt install -y postgresql-17"
+            - echo "Finished" >> /var/log/custom.log
+
+------------------------------------
+
+
+
