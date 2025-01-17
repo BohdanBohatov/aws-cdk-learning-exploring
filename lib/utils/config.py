@@ -26,3 +26,6 @@ class Configuration:
 
     def get_database_config(self) -> Dict[str, str]:
         return self.config.get('database', {})
+
+    def get_ec2_config(self) -> Dict[str, str]:
+        return self.config.get('ec2-config', {})

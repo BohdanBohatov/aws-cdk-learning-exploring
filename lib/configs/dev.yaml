@@ -20,3 +20,8 @@ tags:
   Project: CDK-LEARNING
   Environment: development
   ManagedBy: CDK
+
+ec2-config:
+  instanceType: t3.small
+  keyPairName: bohdan-ssh-key
+  ami: ami-062b6052f576ea0bd

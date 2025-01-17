@@ -11,6 +11,10 @@ class CdkVpcStack(Stack):
     def get_vpc(self):
         return self.vpc
 
+    @property
+    def get_ec2_group(self):
+        return self.ec2_security_group
+
     def __init__(self, scope: Construct, construct_id: str, config: dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -55,6 +59,21 @@ class CdkVpcStack(Stack):
             peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
             connection=ec2.Port.tcp_range(0, 65535),
             description="Allow all inbound traffic from VPC"
+        )
+
+
+        self.ec2_security_group = ec2.SecurityGroup(
+            self, "CDK-Allow-SSH",
+            vpc=self.vpc,
+            description="Allow inbound trafic from VPC",
+            allow_all_outbound=True,
+        )
+
+
+        self.ec2_security_group.add_ingress_rule(
+            peer=ec2.Peer.any_ipv4(),
+            connection=ec2.Port.tcp(22),
+            description="Allow ssh traffic"
         )
         
         #Add endpoint to reach secret manger within VPC
