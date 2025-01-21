@@ -69,3 +69,17 @@ class CdkVerifyPostgresBackup(Stack):
                 "ENVIRONMENT": environment
             }
         )
+
+
+        ec2_verify_postgres_lambda = _lambda.Function(
+            self, f"EC2VerifyPostgresFunction-{environment}",
+            function_name=f"EC2VerifyPostgresFunction-{environment}",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="postgres_verify_lambda.handler",
+            code=_lambda.Code.from_asset("lambdas/postgres_verify_backup"),
+            timeout=Duration.minutes(3),
+        )
+
+
+
+        ec2_verify_postgres_lambda.grant_invoke(ec2_creator_lambda)

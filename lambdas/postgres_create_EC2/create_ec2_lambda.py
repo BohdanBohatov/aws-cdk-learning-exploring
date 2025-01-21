@@ -1,11 +1,14 @@
 import boto3
 import os
+import json
 from botocore.exceptions import WaiterError
 
 
 def handler(event, context):
     ec2_resource = boto3.resource('ec2')
     ec2_client = boto3.client('ec2')
+    lambda_client = boto3.client('lambda')
+
 
     instance_name = os.environ['INSTANCE_NAME']
     image_id = os.environ["AMI_IMAGE"]
@@ -13,7 +16,15 @@ def handler(event, context):
     key_name = os.environ["KEY_NAME"]
     instance_type = os.environ["INSTANCE_TYPE"]
     security_group_id = os.environ["SECURITY_GROUP_ID"]
-    environment = os.environ["ENVIRONMENT"]
+    
+    lambda_name = os.environ["LAMBDA_NAME"]
+
+    s3_bucket_name = event.get('s3_bucket')
+    s3_database_backup = event.get('s3_database_backup')
+    s3_roles_users_backup = event.get('s3_roles_users_backup')
+    s3_backup_path = event.get('s3_backup_path')
+    
+
 
     try:
 
@@ -42,6 +53,9 @@ def handler(event, context):
             KeyName=key_name,
             MaxCount=1,
             MinCount=1,
+            IamInstanceProfile={
+                'Arn': os.environ['EC2_IAM_INSTANCE_ARN']
+            },
             NetworkInterfaces=[
                 {
                     'AssociatePublicIpAddress': True,
@@ -66,19 +80,38 @@ def handler(event, context):
 
         instance= instances[0]
 
+        print("Role attached to instance")
+
+
         # Wait for the instance to be running
         try:
             waiter = ec2_client.get_waiter('instance_running')
             waiter.wait(
                 InstanceIds=[instance.instance_id],
                 WaiterConfig={
-                    'Delay': 5,  # Number of seconds to wait between attempts
-                    'MaxAttempts': 40  # Maximum number of attempts
+                    'Delay': 45,  # Number of seconds to wait between attempts
+                    'MaxAttempts': 5  # Maximum number of attempts
                 }
             )
             
-            # Get instance details after it's running
-            instance.reload()  # Refresh the instance attributes
+            # Refresh the instance attributes
+            instance.reload()
+
+            print(f"Invoke {lambda_name} function to test backup")
+
+            payload = {
+                's3_database_backup': s3_database_backup,
+                's3_roles_users_backup': s3_roles_users_backup,
+                's3_backup_path': s3_backup_path,
+                's3_bucket': s3_bucket_name,
+                'instance_id': instance.instance_id,
+            }
+            
+            lambda_client.invoke(
+                FunctionName=lambda_name,
+                InvocationType='Event',
+                Payload=json.dumps(payload)
+            ) 
             
             return {
                 'statusCode': 200,
@@ -87,7 +120,11 @@ def handler(event, context):
                     'instanceId': instance.instance_id,
                     'privateIp': instance.private_ip_address,
                     'publicIp': instance.public_ip_address if instance.public_ip_address else None,
-                    'state': instance.state['Name']
+                    'state': instance.state['Name'],
+                    's3_bucket': s3_bucket_name,
+                    's3_database_backup': s3_database_backup,
+                    's3_roles_users_backup': s3_roles_users_backup,
+                    's3_backup_path': s3_backup_path,
                 }
             }
             

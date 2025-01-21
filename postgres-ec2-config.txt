@@ -19,6 +19,12 @@ DEBIAN_FRONTEND=noninteractive apt install -y postgresql-17
 If no ssm agent running on instance need to run it:
 sudo snap start amazon-ssm-agent
 systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
+
+Some useful commands
+sudo tail -f /var/log/amazon/ssm/amazon-ssm-agent.log - ssm log file
+vim /var/log/amazon/ssm/amazon-ssm-agent.log
+systemctl status snap.amazon-ssm-agent.amazon-ssm-agent.service
+
 -----------------
 Permission to EC2
     Access to s3 bucket to list and download items
@@ -61,9 +67,7 @@ tail -f /dev/null
 
 ---------------
 
-Some useful commands
-sudo tail -f /var/log/amazon/ssm/amazon-ssm-agent.log - ssm log file
-systemctl status snap.amazon-ssm-agent.amazon-ssm-agent.service
+
 
 
 ----------------
@@ -92,5 +96,5 @@ phases:
 
 ------------------------------------
 
-
+  
 

@@ -11,7 +11,7 @@ from lib.stacks.cdk_vpc_stack import CdkVpcStack
 from lib.stacks.cdl_ec2B_lb_stack import CdkEc2LbStack
 from lib.stacks.cdk_create_db_user_stack import CdkCreatePostgresUserStack
 from lib.stacks.cdk_S3_postgres_db_backup import CdkPostgresBackupStack
-from lib.stacks.cdk_verify_postgres_17_backup import CdkVerifyPostgresBackup
+from lib.stacks.old_stacks.cdk_verify_postgres_17_backup import CdkVerifyPostgresBackup
 
 
 class ApplicationStack:
@@ -23,7 +23,6 @@ class ApplicationStack:
         self._init_infrastructure_stacks()
         self._database_stacks()
         self._postgres_backup_stack()
-        self._verify_postgres_backup_stack()
 
 
     def _init_infrastructure_stacks(self) -> None:
@@ -101,23 +100,13 @@ class ApplicationStack:
             f"CdkPostgresBackupStack-{self.env_name}",
             environment=self.env_name,
             db_instance=self.rds_stack.get_db_instance,
-            vpc=self.vpc_stack.vpc
+            vpc=self.vpc_stack.vpc,
+            ec2_configuration=self.config.get_ec2_config(),
+            ec2_security_group=self.vpc_stack.get_ec2_group,
         )
 
         self.postgres_backup_stack.add_dependency(self.create_database_stack)
         self.postgres_backup_stack.add_dependency(self.lambda_layer_stack)
-
-    def _verify_postgres_backup_stack(self) -> None:
-        self.verify_postgres_backup_stack = CdkVerifyPostgresBackup(
-            self.app,
-            f"CdkVerifyPostgresBackupStack-{self.env_name}",
-            environment=self.env_name,
-            vpc=self.vpc_stack.vpc,
-            ec2_configuration=self.config.get_ec2_config(),
-            security_group=self.vpc_stack.get_ec2_group,
-        )
-
-        self.verify_postgres_backup_stack.add_dependency(self.postgres_backup_stack)
 
 
 def main() -> None:
