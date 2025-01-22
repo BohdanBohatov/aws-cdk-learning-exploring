@@ -25,6 +25,10 @@ sudo tail -f /var/log/amazon/ssm/amazon-ssm-agent.log - ssm log file
 vim /var/log/amazon/ssm/amazon-ssm-agent.log
 systemctl status snap.amazon-ssm-agent.amazon-ssm-agent.service
 
+got to folder with ssm scripts
+cd /var/lib/amazon/ssm/{instance id}/document/orchestration
+cd /var/lib/amazon/ssm/i-059d75af0fb5b7baf/document/orchestration
+
 -----------------
 Permission to EC2
     Access to s3 bucket to list and download items
@@ -98,3 +102,16 @@ phases:
 
   
 
+AzCopy install:
+
+curl -sSL -O https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+sudo apt-get update
+sudo apt-get install azcopy
+
+
+export AZCOPY_SPA_CLIENT_SECRET={secret}
+azcopy login --login-type=SPN --application-id "11ba74dd-f36a-4d4b-b7da-43ad2ef19e40" --tenant-id "123ad83c-6d48-4d1c-af36-dee2ba605827"
+
+azcopy copy backup_filtered_roles.sql 'https://postgresbackups12341.blob.core.windows.net/postgres-backups/{folder}/asfgdsgsroles.sql'

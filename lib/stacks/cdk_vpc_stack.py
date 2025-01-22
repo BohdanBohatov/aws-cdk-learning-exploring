@@ -46,21 +46,6 @@ class CdkVpcStack(Stack):
             enable_dns_support=config['enableDnsSupport'],
             vpc_name="CDK-vpc"
         )
-        
-        
-        security_group = ec2.SecurityGroup(
-            self, "CDK-SecretManagerSecurityGroup",
-            vpc=self.vpc,
-            description="Allow inbound trafic from VPC",
-            allow_all_outbound=True,
-        )
-
-        security_group.add_ingress_rule(
-            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
-            connection=ec2.Port.tcp_range(0, 65535),
-            description="Allow all inbound traffic from VPC"
-        )
-
 
         self.ec2_security_group = ec2.SecurityGroup(
             self, "CDK-Allow-SSH",
@@ -75,6 +60,19 @@ class CdkVpcStack(Stack):
             connection=ec2.Port.tcp(22),
             description="Allow ssh traffic"
         )
+
+        security_group = ec2.SecurityGroup(
+            self, "CDK-SecretManagerSecurityGroup",
+            vpc=self.vpc,
+            description="Allow inbound trafic from VPC",
+            allow_all_outbound=True,
+        )
+
+        security_group.add_ingress_rule(
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
+            connection=ec2.Port.tcp_range(0, 65535),
+            description="Allow all inbound traffic from VPC"
+        )
         
         #Add endpoint to reach secret manger within VPC
         self.vpc.add_interface_endpoint(
@@ -85,6 +83,17 @@ class CdkVpcStack(Stack):
                 subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
             ),
             security_groups= [security_group],
+        )
+
+        # Add Lambda endpoint
+        self.vpc.add_interface_endpoint(
+            "LambdaEndpoint",
+            service=ec2.InterfaceVpcEndpointAwsService.LAMBDA_,
+            private_dns_enabled=True,
+            subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
+            ),
+            security_groups=[security_group],
         )
 
         self.vpc.add_gateway_endpoint("S3Endpoint",

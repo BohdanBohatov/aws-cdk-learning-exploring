@@ -22,6 +22,7 @@ class CdkPostgresBackupStack(Stack):
                 db_instance: rds.DatabaseInstance,
                 ec2_configuration: dict,
                 ec2_security_group: ec2.SecurityGroup,
+                azure_configuration: dict,
                 **kwargs) -> None:
                 
         super().__init__(scope, construct_id, **kwargs)
@@ -31,6 +32,7 @@ class CdkPostgresBackupStack(Stack):
         self.db_instance = db_instance
         self.ec2_configuration = ec2_configuration
         self.ec2_security_group = ec2_security_group
+        self.azure_configuration = azure_configuration
 
         """
             Lambdas names need to hand over to other lambdas to be able one lambda to run enother lambda 
@@ -65,9 +67,9 @@ class CdkPostgresBackupStack(Stack):
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr.Repository.from_repository_name(
                     self, "lambda-images",
-                    repository_name="lambda-images/fedora41-postgresql"  # Replace with your ECR repo name
+                    repository_name="lambda-images/fedora41-postgresql"
                 ),
-                tag_or_digest="1.15"
+                tag_or_digest="1.16"
             ),
             timeout=Duration.minutes(3),
             vpc=self.vpc,
@@ -127,10 +129,20 @@ class CdkPostgresBackupStack(Stack):
             )
         )
 
+        ec2_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "secretsmanager:GetSecretValue"
+                ],
+                resources=[
+                    self.azure_configuration["secretArn"]
+                ],
+            )
+        )
+
         ec2_role.add_managed_policy(
             iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore")
         )
-        
 
         # IAM role for Lambda
         lambda_create_ec2_role = iam.Role(
@@ -179,7 +191,6 @@ class CdkPostgresBackupStack(Stack):
             )
         )
 
-        #Lambda function
         ec2_creator_lambda = _lambda.Function(
             self, self.create_ec2_lambda_name,
             function_name=self.create_ec2_lambda_name,
@@ -233,17 +244,13 @@ class CdkPostgresBackupStack(Stack):
             handler="postgres_verify_backup_lambda.lambda_handler",
             code=_lambda.Code.from_asset("lambdas/postgres_verify_backup"),
             timeout=Duration.minutes(3),
+            environment={
+                "AZURE_SECRET_ARN": self.azure_configuration["secretArn"]
+            }
         )
 
         ec2_creator_lambda.grant_invoke(self.backup_lambda)
         ec2_verify_postgres_lambda.grant_invoke(ec2_creator_lambda)
         self.backup_bucket.grant_read_write(ec2_verify_postgres_lambda)
-
-
-
-
-
-
-
 
 

@@ -103,6 +103,7 @@ class ApplicationStack:
             vpc=self.vpc_stack.vpc,
             ec2_configuration=self.config.get_ec2_config(),
             ec2_security_group=self.vpc_stack.get_ec2_group,
+            azure_configuration=self.config.get_azure_config()
         )
 
         self.postgres_backup_stack.add_dependency(self.create_database_stack)

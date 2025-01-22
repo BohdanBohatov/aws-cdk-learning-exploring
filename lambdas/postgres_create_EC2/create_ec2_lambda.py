@@ -22,9 +22,22 @@ def handler(event, context):
     s3_bucket_name = event.get('s3_bucket')
     s3_database_backup = event.get('s3_database_backup')
     s3_roles_users_backup = event.get('s3_roles_users_backup')
-    s3_backup_path = event.get('s3_backup_path')
-    
 
+    if not all([instance_name, image_id, vpc_id, key_name, instance_type, security_group_id, s3_bucket_name, s3_database_backup, s3_roles_users_backup]):
+        print(
+            f"instance_name: {instance_name}, "
+            f"image_id: {image_id}, "
+            f"vpc_id: {vpc_id}, "
+            f"key_name: {key_name}, "
+            f"instance_type: {instance_type}, "
+            f"security_group_id: {security_group_id}, "
+            f"s3_bucket_name: {s3_bucket_name}, "
+            f"s3_database_backup: {s3_database_backup}, "
+            f"s3_roles_users_backup: {s3_roles_users_backup}"
+        )
+
+        raise Exception("Missing required parameters")
+    
 
     try:
 
@@ -102,7 +115,6 @@ def handler(event, context):
             payload = {
                 's3_database_backup': s3_database_backup,
                 's3_roles_users_backup': s3_roles_users_backup,
-                's3_backup_path': s3_backup_path,
                 's3_bucket': s3_bucket_name,
                 'instance_id': instance.instance_id,
             }
@@ -124,7 +136,6 @@ def handler(event, context):
                     's3_bucket': s3_bucket_name,
                     's3_database_backup': s3_database_backup,
                     's3_roles_users_backup': s3_roles_users_backup,
-                    's3_backup_path': s3_backup_path,
                 }
             }
             

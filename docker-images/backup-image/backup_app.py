@@ -97,19 +97,14 @@ def lambda_handler(event, context):
         payload = {
             's3_database_backup': s3_database_backup,
             's3_roles_users_backup': s3_roles_users_backup,
-            's3_backup_path': s3_backup_path,
             's3_bucket': bucket_name
         }
         
-        result = lambda_client.invoke(
+        lambda_client.invoke(
             FunctionName=lambda_name,
             InvocationType='Event',
             Payload=json.dumps(payload)
         ) 
-
-        print(result)
-
-
 
         return {
             'statusCode': 200,

@@ -29,3 +29,6 @@ class Configuration:
 
     def get_ec2_config(self) -> Dict[str, str]:
         return self.config.get('ec2-config', {})
+    
+    def get_azure_config(self) -> Dict[str, Any]:
+        return self.config.get('azure', {})

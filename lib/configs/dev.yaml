@@ -24,4 +24,7 @@ tags:
 ec2-config:
   instanceType: t3.small
   keyPairName: bohdan-ssh-key
-  ami: ami-062b6052f576ea0bd
+  ami: ami-076dfc04144d9149c
+
+azure:
+  secretArn: "arn:aws:secretsmanager:eu-north-1:533267448108:secret:azure-postgres-backup-z5Y3GV"
