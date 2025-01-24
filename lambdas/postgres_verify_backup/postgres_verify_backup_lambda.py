@@ -12,6 +12,7 @@ def lambda_handler(event, context):
     roles_users_backup_name = event.get('s3_roles_users_backup')
     s3_bucket = event.get('s3_bucket')
     azure_secret_arn = os.environ["AZURE_SECRET_ARN"]
+    delete_ec2_lambda_name = os.environ["DELETE_EC2_LAMBDA_NAME"]
 
 
     if not (instance_id or database_backup_name or roles_users_backup_name or s3_bucket or azure_secret_arn):
@@ -29,9 +30,10 @@ def lambda_handler(event, context):
                     set -e
                     mkdir -p /tmp/data-backups
 
+                    su postgres -c "/usr/lib/postgresql/17/bin/pg_ctl -D /etc/postgresql/17/main/ -l /etc/postgresql/17/main/logfile.log stop"
                     su postgres -c "echo \\"listen_addresses=\'*\'\\" >> /etc/postgresql/17/main/postgresql.conf"
                     su postgres -c "echo \\"host all all 0.0.0.0/0 md5\\" >> /etc/postgresql/17/main/pg_hba.conf"
-                    su postgres -c "/usr/lib/postgresql/17/bin/pg_ctl -D /var/lib/postgresql/17/main restart"
+                    su postgres -c "/usr/lib/postgresql/17/bin/pg_ctl -D /etc/postgresql/17/main/ -l /etc/postgresql/17/main/logfile.log start"
 
                     aws s3 cp s3://{s3_bucket}/{database_backup_name} /tmp/data-backups
                     aws s3 cp s3://{s3_bucket}/{roles_users_backup_name} /tmp/data-backups
@@ -44,6 +46,14 @@ def lambda_handler(event, context):
                     su postgres -c "psql -f /tmp/data-backups/backup_filtered_roles.sql postgres -U postgres"
                     su postgres -c "pg_restore --create -U postgres -d postgres /tmp/data-backups/$database_basename"
 
+                    #RECORDS=$(sudo -u postgres psql -d dev_database -c "SELECT COUNT(*) AS record FROM test_table WHERE created_at >= CURRENT_DATE - INTERVAL '1 day'" -t)
+
+                    RECORDS=$(sudo -u postgres psql -d dev_database -c "SELECT COUNT(*) FROM test_table where created_at = '2025-01-23 08:29:35.514166'" -t)
+                    if [[ "$RECORDS" -eq 0 ]]; then
+                        echo "Inform some SNS service that backup is broken or doesn't have yesterday's records" >> /var/log/record.log
+                        exit 1
+                    fi
+
                     export AZCOPY_SPA_CLIENT_SECRET=$(aws secretsmanager get-secret-value --secret-id '{azure_secret_arn}' --output text --query "SecretString" | jq -r '.["azurePostgresPrincipal"]')
                     export APPLICATION_ID=$(aws secretsmanager get-secret-value --secret-id '{azure_secret_arn}' --output text --query "SecretString" | jq -r '.["applicationId"]')
                     export TENANT_ID=$(aws secretsmanager get-secret-value --secret-id '{azure_secret_arn}' --output text --query "SecretString" | jq -r '.["tenantId"]')
@@ -52,16 +62,11 @@ def lambda_handler(event, context):
                     azcopy login --login-type=SPN --application-id $APPLICATION_ID --tenant-id $TENANT_ID
                     azcopy copy "/tmp/data-backups/$database_basename" "$BUCKET_NAME/{database_backup_name}"
                     azcopy copy "/tmp/data-backups/$role_database_basename" "$BUCKET_NAME/{roles_users_backup_name}"
-                    """
-                   
 
-                    #TODO code to check records in postgresql
-                    #"sudo -u postgres psql -d dev_database -c \"SELECT * from test_table\""
+                    aws lambda invoke --function-name {delete_ec2_lambda_name} --invocation-type Event --cli-binary-format raw-in-base64-out --payload '{{"instance_id": "{instance_id}"}}' /dev/null
+                    """
 
                     #Umpload databases without system information to S3 and azure
-
-                    #destroy instance
-                    #"aws ec2 terminate-instances --instance-ids {instance_id}"
                 ]
             }
         )
@@ -79,9 +84,4 @@ def lambda_handler(event, context):
         
     except Exception as e:
         print(f"Error executing command: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'message': f'Error executing command: {str(e)}'
-            })
-        }
+        return Exception(f"Error executing command: {str(e)}")

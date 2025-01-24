@@ -39,6 +39,7 @@ class CdkPostgresBackupStack(Stack):
         """
         self.create_ec2_lambda_name = f"EC2CreatorFunction-{self.env_name}"
         self.verify_ec2_lambda_name = f"EC2VerifyPostgresFunction-{self.env_name}"
+        self.delete_ec2_lambda_name = f"DeleteEC2InstanceFunction-{self.env_name}"
 
         self.ec2_instance_name = f"EC2-verify-postgres-backup-{self.env_name}"
 
@@ -245,12 +246,42 @@ class CdkPostgresBackupStack(Stack):
             code=_lambda.Code.from_asset("lambdas/postgres_verify_backup"),
             timeout=Duration.minutes(3),
             environment={
-                "AZURE_SECRET_ARN": self.azure_configuration["secretArn"]
+                "AZURE_SECRET_ARN": self.azure_configuration["secretArn"],
+                "DELETE_EC2_LAMBDA_NAME": self.delete_ec2_lambda_name,
             }
         )
 
+        ec2_delete_instance_role = iam.Role(
+            self, f"LambdaDeleteEC2Role-{self.env_name}",
+            role_name= f"LambdaDeleteEC2Role-{self.env_name}",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com")
+        )
+
+        ec2_delete_instance_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ec2:TerminateInstances",
+                    "ec2:DescribeInstances",
+                ],
+                resources=["*"],
+            )
+        )
+
+        ec2_delete_instnace_lambda = _lambda.Function(
+            self, self.delete_ec2_lambda_name,
+            function_name=self.delete_ec2_lambda_name,
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="delete_ec2_lambda.handler",
+            code=_lambda.Code.from_asset("lambdas/postgres_delete_EC2"),
+            timeout=Duration.minutes(3),
+            role=ec2_delete_instance_role
+        )
+
+        
         ec2_creator_lambda.grant_invoke(self.backup_lambda)
         ec2_verify_postgres_lambda.grant_invoke(ec2_creator_lambda)
         self.backup_bucket.grant_read_write(ec2_verify_postgres_lambda)
+        ec2_delete_instnace_lambda.grant_invoke(ec2_role)
+
 
 
