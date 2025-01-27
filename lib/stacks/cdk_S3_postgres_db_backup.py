@@ -23,6 +23,7 @@ class CdkPostgresBackupStack(Stack):
                 ec2_configuration: dict,
                 ec2_security_group: ec2.SecurityGroup,
                 azure_configuration: dict,
+                sns_arn: str,
                 **kwargs) -> None:
                 
         super().__init__(scope, construct_id, **kwargs)
@@ -33,6 +34,7 @@ class CdkPostgresBackupStack(Stack):
         self.ec2_configuration = ec2_configuration
         self.ec2_security_group = ec2_security_group
         self.azure_configuration = azure_configuration
+        self.sns_arn = sns_arn
 
         """
             Lambdas names need to hand over to other lambdas to be able one lambda to run enother lambda 
@@ -145,6 +147,16 @@ class CdkPostgresBackupStack(Stack):
             iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore")
         )
 
+        ec2_role.add_to_policy(iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "sns:Publish"
+            ],
+            resources=[
+                self.sns_arn
+            ]
+        ))
+
         # IAM role for Lambda
         lambda_create_ec2_role = iam.Role(
             self, f"LambdaEC2Role-{self.env_name}",
@@ -248,6 +260,8 @@ class CdkPostgresBackupStack(Stack):
             environment={
                 "AZURE_SECRET_ARN": self.azure_configuration["secretArn"],
                 "DELETE_EC2_LAMBDA_NAME": self.delete_ec2_lambda_name,
+                "ENVIRONMENT": self.env_name,
+                "SNS_TOPIC_ARN": self.sns_arn
             }
         )
 

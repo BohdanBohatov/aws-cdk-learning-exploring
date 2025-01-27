@@ -11,7 +11,7 @@ from lib.stacks.cdk_vpc_stack import CdkVpcStack
 from lib.stacks.cdl_ec2B_lb_stack import CdkEc2LbStack
 from lib.stacks.cdk_create_db_user_stack import CdkCreatePostgresUserStack
 from lib.stacks.cdk_S3_postgres_db_backup import CdkPostgresBackupStack
-from lib.stacks.old_stacks.cdk_verify_postgres_17_backup import CdkVerifyPostgresBackup
+from lib.stacks.cdk_backup_sns_stack import BackupSnsStack
 
 
 class ApplicationStack:
@@ -22,6 +22,7 @@ class ApplicationStack:
 
         self._init_infrastructure_stacks()
         self._database_stacks()
+        self._postgres_email_notification_stack()
         self._postgres_backup_stack()
 
 
@@ -103,11 +104,22 @@ class ApplicationStack:
             vpc=self.vpc_stack.vpc,
             ec2_configuration=self.config.get_ec2_config(),
             ec2_security_group=self.vpc_stack.get_ec2_group,
-            azure_configuration=self.config.get_azure_config()
+            azure_configuration=self.config.get_azure_config(),
+            sns_arn=self.email_notification_stack.get_sns_topic_arn()
         )
 
         self.postgres_backup_stack.add_dependency(self.create_database_stack)
         self.postgres_backup_stack.add_dependency(self.lambda_layer_stack)
+        self.postgres_backup_stack.add_dependency(self.email_notification_stack)
+
+    def _postgres_email_notification_stack(self) -> None:
+        """Initialize email notification stack"""
+        self.email_notification_stack = BackupSnsStack(
+            self.app,
+            f"CdkBackupNotificationStack-{self.env_name}",
+            environment=self.env_name,
+            notification_emails=self.config.get_backup_notification_emails()
+        )
 
 
 def main() -> None:

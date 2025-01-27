@@ -28,3 +28,7 @@ ec2-config:
 
 azure:
   secretArn: "arn:aws:secretsmanager:eu-north-1:533267448108:secret:azure-postgres-backup-z5Y3GV"
+
+postgres-backup-notification-emails:
+  - "bbohatovmif+postgres-backup@gmail.com"
+

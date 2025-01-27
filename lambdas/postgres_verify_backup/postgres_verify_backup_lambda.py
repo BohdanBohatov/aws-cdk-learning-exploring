@@ -13,9 +13,11 @@ def lambda_handler(event, context):
     s3_bucket = event.get('s3_bucket')
     azure_secret_arn = os.environ["AZURE_SECRET_ARN"]
     delete_ec2_lambda_name = os.environ["DELETE_EC2_LAMBDA_NAME"]
+    topic_arn = os.environ["SNS_TOPIC_ARN"]
+    environment = os.environ["ENVIRONMENT"]
 
 
-    if not (instance_id or database_backup_name or roles_users_backup_name or s3_bucket or azure_secret_arn):
+    if not (instance_id or database_backup_name or roles_users_backup_name or s3_bucket or azure_secret_arn or delete_ec2_lambda_name or topic_arn):
         Exception("Missing required parameters")
     
     try:
@@ -62,6 +64,13 @@ def lambda_handler(event, context):
                     azcopy login --login-type=SPN --application-id $APPLICATION_ID --tenant-id $TENANT_ID
                     azcopy copy "/tmp/data-backups/$database_basename" "$BUCKET_NAME/{database_backup_name}"
                     azcopy copy "/tmp/data-backups/$role_database_basename" "$BUCKET_NAME/{roles_users_backup_name}"
+
+                    aws sns publish --topic-arn {topic_arn} --message "Backup for postgres created, environment: {environment}.\n\
+                    S3 roles backup: {s3_bucket}/{roles_users_backup_name};\n\
+                    S3 database backup: {s3_bucket}/{database_backup_name};\n\
+                    Azure roles backup: $BUCKET_NAME/{roles_users_backup_name};\n\
+                    Azure database backup: $BUCKET_NAME/{database_backup_name}" \
+                        --subject "{environment}-Postgresql backup created sucessfully" --message-structure "string"
 
                     aws lambda invoke --function-name {delete_ec2_lambda_name} --invocation-type Event --cli-binary-format raw-in-base64-out --payload '{{"instance_id": "{instance_id}"}}' /dev/null
                     """
